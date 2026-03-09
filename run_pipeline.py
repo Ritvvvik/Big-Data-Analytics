@@ -1,11 +1,23 @@
+"""Command-line entrypoint for training."""
+
 from pathlib import Path
+import argparse
 
 from src.healthcare_ml.pipeline import run_training_pipeline
 
 
 if __name__ == "__main__":
-    summary = run_training_pipeline(Path("."))
-    print("Pipeline completed.")
-    print("Best model:", summary["best_model"])
-    for model_name, metrics in summary["model_metrics"].items():
-        print(model_name, metrics)
+    parser = argparse.ArgumentParser(description="Train readmission prediction models")
+    parser.add_argument(
+        "--csv",
+        type=str,
+        default="data/diabetic_data.csv",
+        help="Path to diabetic_data.csv",
+    )
+    args = parser.parse_args()
+
+    output = run_training_pipeline(base_dir=Path("."), csv_path=Path(args.csv))
+
+    print("\nTraining complete")
+    print("Best model:", output["best_model"])
+    print("Saved model:", output["saved_model"])

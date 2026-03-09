@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+"""Preprocessing utilities for the readmission problem.
+
+Design goal: keep this file easy to read in classroom/faculty review sessions.
+"""
+
 from dataclasses import dataclass
 from typing import List, Tuple
 
@@ -10,87 +15,94 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
+TARGET_COLUMN = "readmitted"
+TARGET_BINARY = "readmitted_binary"
+
 
 @dataclass
-class SplitData:
+class DataSplit:
     X_train: pd.DataFrame
     X_test: pd.DataFrame
     y_train: pd.Series
     y_test: pd.Series
 
 
-def prepare_target(df: pd.DataFrame) -> pd.DataFrame:
-    """Convert multi-class readmission target to binary: 1 for <30 days, else 0."""
-    cleaned = df.copy()
-    cleaned = cleaned[cleaned["readmitted"].notna()]
-    cleaned["readmitted_binary"] = (cleaned["readmitted"] == "<30").astype(int)
+def clean_raw_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Basic cleanup used by all models.
+
+    - Converts '?' placeholders to missing values.
+    - Drops duplicate rows.
+    """
+    cleaned = df.replace("?", pd.NA).drop_duplicates().copy()
     return cleaned
 
 
-def basic_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
-    engineered = df.copy()
-    if {"num_medications", "num_lab_procedures", "num_procedures"}.issubset(
-        engineered.columns
-    ):
-        engineered["care_intensity_index"] = (
-            engineered["num_medications"]
-            + engineered["num_lab_procedures"]
-            + engineered["num_procedures"]
+def build_binary_target(df: pd.DataFrame) -> pd.DataFrame:
+    """Create a binary target: 1 for <30-day readmission, else 0."""
+    out = df[df[TARGET_COLUMN].notna()].copy()
+    out[TARGET_BINARY] = (out[TARGET_COLUMN] == "<30").astype(int)
+    return out
+
+
+def add_simple_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add two intuitive aggregate features frequently used in this dataset."""
+    out = df.copy()
+
+    if {"num_medications", "num_lab_procedures", "num_procedures"}.issubset(out.columns):
+        out["care_intensity_index"] = (
+            out["num_medications"] + out["num_lab_procedures"] + out["num_procedures"]
         )
-    if {"number_outpatient", "number_emergency", "number_inpatient"}.issubset(
-        engineered.columns
-    ):
-        engineered["total_prior_visits"] = (
-            engineered["number_outpatient"]
-            + engineered["number_emergency"]
-            + engineered["number_inpatient"]
+
+    if {"number_outpatient", "number_emergency", "number_inpatient"}.issubset(out.columns):
+        out["total_prior_visits"] = (
+            out["number_outpatient"] + out["number_emergency"] + out["number_inpatient"]
         )
-    return engineered
+
+    return out
 
 
-def split_features_target(df: pd.DataFrame) -> SplitData:
-    drop_cols = [
-        "encounter_id",
-        "patient_nbr",
-        "readmitted",
-        "readmitted_binary",
-    ]
-    available_drop_cols = [c for c in drop_cols if c in df.columns]
+def train_test_data(df: pd.DataFrame, test_size: float = 0.2) -> DataSplit:
+    """Build X/y and return a stratified train/test split."""
+    ignore_cols = ["encounter_id", "patient_nbr", TARGET_COLUMN, TARGET_BINARY]
+    ignore_cols = [c for c in ignore_cols if c in df.columns]
 
-    X = df.drop(columns=available_drop_cols)
-    y = df["readmitted_binary"]
+    X = df.drop(columns=ignore_cols)
+    y = df[TARGET_BINARY]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+        X,
+        y,
+        test_size=test_size,
+        random_state=42,
+        stratify=y,
     )
-    return SplitData(X_train, X_test, y_train, y_test)
+    return DataSplit(X_train, X_test, y_train, y_test)
 
 
-def build_preprocessor(X: pd.DataFrame) -> Tuple[ColumnTransformer, List[str], List[str]]:
-    numeric_features = X.select_dtypes(include=["number", "bool"]).columns.tolist()
-    categorical_features = X.select_dtypes(exclude=["number", "bool"]).columns.tolist()
+def make_preprocessor(X: pd.DataFrame) -> Tuple[ColumnTransformer, List[str], List[str]]:
+    """Create preprocessing pipelines for numeric and categorical columns."""
+    numeric_cols = X.select_dtypes(include=["number", "bool"]).columns.tolist()
+    categorical_cols = X.select_dtypes(exclude=["number", "bool"]).columns.tolist()
 
-    numeric_transformer = Pipeline(
-        steps=[
+    numeric_pipeline = Pipeline(
+        [
             ("imputer", SimpleImputer(strategy="median")),
             ("scaler", StandardScaler()),
         ]
     )
 
-    categorical_transformer = Pipeline(
-        steps=[
+    categorical_pipeline = Pipeline(
+        [
             ("imputer", SimpleImputer(strategy="most_frequent")),
-            (
-                "encoder",
-                OneHotEncoder(handle_unknown="ignore", sparse=False),
-            ),
+            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse=False)),
         ]
     )
 
     preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features),
+        [
+            ("numeric", numeric_pipeline, numeric_cols),
+            ("categorical", categorical_pipeline, categorical_cols),
         ]
     )
-    return preprocessor, numeric_features, categorical_features
+
+    return preprocessor, numeric_cols, categorical_cols

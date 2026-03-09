@@ -1,58 +1,66 @@
-# Healthcare Readmission ML Pipeline (UCI Diabetes 130-US Hospitals)
+# Healthcare ML Pipeline: Diabetes Readmission Prediction
 
-This project implements a modular, end-to-end machine learning pipeline to predict hospital readmission risk using the UCI `diabetic_data.csv` dataset.
+A simple, faculty-friendly machine learning project using the UCI Diabetes 130-US Hospitals dataset.
 
-## Architecture
+## Libraries used (simple stack)
 
-1. **Data Ingestion Layer**: Downloads and loads dataset.
-2. **Data Processing Layer**: Missing value handling, encoding, scaling, feature engineering, split.
-3. **Machine Learning Layer**: Logistic Regression, Random Forest, XGBoost.
-4. **Model Selection**: Picks best model using ROC AUC.
-5. **Clinical Decision Output**: Returns probability + 0-100 risk score + risk band.
-6. **Visualization Layer**: Feature importance, confusion matrix, ROC curve.
-7. **Optional Dashboard**: Streamlit app for clinician-facing risk prediction.
+- pandas
+- scikit-learn
+- matplotlib
+- seaborn
+- streamlit (optional dashboard)
 
-## Project Structure
+## 1) Get the dataset
 
-- `src/healthcare_ml/data.py` – data download, loading, EDA summary.
-- `src/healthcare_ml/preprocessing.py` – target prep, feature engineering, preprocessing and split.
-- `src/healthcare_ml/modeling.py` – model definitions.
-- `src/healthcare_ml/evaluation.py` – metric calculation and model selection.
-- `src/healthcare_ml/clinical.py` – clinical risk score utilities.
-- `src/healthcare_ml/visualization.py` – chart generation.
-- `src/healthcare_ml/pipeline.py` – orchestrates full training workflow.
-- `run_pipeline.py` – training entrypoint.
-- `dashboard.py` – Streamlit dashboard.
+Download from UCI:
+- https://archive.ics.uci.edu/dataset/296/diabetes+130-us+hospitals+for+years+1999-2008
 
-## Setup
+Place `diabetic_data.csv` at:
+- `data/diabetic_data.csv`
+
+## 2) Install and run
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+python run_pipeline.py --csv data/diabetic_data.csv
 ```
 
-## Run the full training pipeline
+## 3) What the pipeline does
 
-```bash
-python run_pipeline.py
-```
+1. Load CSV with pandas
+2. Clean data (`?` → missing values, remove duplicates)
+3. Build binary target (`readmitted == "<30"`)
+4. Encode categorical features, scale numeric features
+5. Train models:
+   - Logistic Regression
+   - Random Forest
+6. Evaluate with:
+   - Accuracy
+   - Precision
+   - Recall
+   - F1 Score
+   - ROC AUC
+7. Choose best model by ROC AUC
+8. Save model + metrics + plots
 
-Outputs:
-- Trained model: `models/best_readmission_model.joblib`
-- Summary metrics: `artifacts/training_summary.json`
-- Visuals in `figures/`
-- One sample patient row: `artifacts/sample_patient.csv`
+## Outputs
 
-## Run dashboard (optional)
+- `models/best_readmission_model.joblib`
+- `artifacts/training_summary.json`
+- `artifacts/sample_patient.csv`
+- `figures/confusion_matrix.png`
+- `figures/roc_curve.png`
+- `figures/feature_importance.png` (if best model supports importance)
+
+## Optional dashboard
 
 ```bash
 streamlit run dashboard.py
 ```
 
-## Notes
-
-- The binary target is defined as readmitted within **<30 days** (`1`) vs all others (`0`).
-- Missing values are handled with median/mode imputers.
-- Categorical variables are one-hot encoded.
-- Numeric variables are standardized.
+The dashboard loads the saved model and predicts:
+- readmission probability
+- risk score (0–100)
+- risk band (Low/Moderate/High)
