@@ -13,12 +13,17 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
+from sklearn.metrics import classification_report
 
 
 def evaluate_model(model, X_test, y_test) -> Dict[str, object]:
     """Compute standard binary-classification metrics and ROC points."""
+    
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:, 1]
+
+    # 👇 ADD THIS LINE
+    print(classification_report(y_test, y_pred))
 
     fpr, tpr, thresholds = roc_curve(y_test, y_proba)
 

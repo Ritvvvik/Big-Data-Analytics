@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict
 
 import joblib
-
+from tqdm import tqdm
 from .data import load_csv, quick_eda
 from .evaluation import choose_best_model, evaluate_model
 from .modeling import build_models
@@ -19,6 +19,7 @@ from .preprocessing import (
     train_test_data,
 )
 from .visualization import plot_confusion_matrix, plot_roc_curve, plot_top_feature_importance
+
 
 
 def run_training_pipeline(
@@ -46,7 +47,7 @@ def run_training_pipeline(
     models = build_models(preprocessor)
     results: Dict[str, Dict[str, object]] = {}
     trained = {}
-    for model_name, pipeline in models.items():
+    for model_name, pipeline in tqdm(models.items(), desc="Training models"):
         pipeline.fit(split.X_train, split.y_train)
         results[model_name] = evaluate_model(pipeline, split.X_test, split.y_test)
         trained[model_name] = pipeline
@@ -102,3 +103,13 @@ def run_training_pipeline(
 
     split.X_test.head(1).to_csv(artifacts_dir / "sample_patient.csv", index=False)
     return summary
+
+
+if __name__ == "__main__":
+    print("Starting training pipeline...\n")
+
+    summary = run_training_pipeline()
+
+    print("\nTraining complete!")
+    print("Best model:", summary["best_model"])
+    print("Saved model:", summary["saved_model"])
