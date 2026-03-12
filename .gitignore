@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+data/
+models/
+figures/
+artifacts/
+
+# avoid binary docs assets in git
+docs/images/*.png
