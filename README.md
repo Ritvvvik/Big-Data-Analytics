@@ -2,6 +2,23 @@
 
 A simple, faculty-friendly machine learning project using the UCI Diabetes 130-US Hospitals dataset.
 
+## Application Architecture (Text Diagram)
+
+> Binary images are removed to avoid platforms that do not support binary files in diffs/previews.
+
+```mermaid
+flowchart TD
+    A[Data Sources\nEHR / Labs / Demographics / Medications] --> B[Data Ingestion Layer\nLoad CSV (local or auto-download from UCI)]
+    B --> C[Data Processing Layer\nCleaning + Missing Values + Encoding + Scaling + Feature Engineering]
+    C --> D[Class Imbalance Handling\nSMOTE]
+    D --> E[Machine Learning Layer\nLogistic Regression + Random Forest]
+    E --> F[Evaluation Layer\nAccuracy, Precision, Recall, F1, ROC AUC]
+    F --> G[Model Selection\nBest ROC AUC]
+    G --> H[Clinical Decision Output\nReadmission Probability + Risk Score + Risk Band]
+    G --> I[Visualization Layer\nConfusion Matrix + ROC + ROC Comparison + SHAP]
+    H --> J[Streamlit Doctor Dashboard\nEssential features only]
+```
+
 ## Libraries used
 
 - pandas
@@ -12,13 +29,15 @@ A simple, faculty-friendly machine learning project using the UCI Diabetes 130-U
 - shap (**SHAP explainability**)
 - streamlit (optional dashboard)
 
-## 1) Get the dataset
+## 1) Dataset handling
 
-Download from UCI:
+This repository does **not** store the dataset in Git.
+
+- Preferred: place `diabetic_data.csv` at `data/diabetic_data.csv`
+- If missing, the pipeline automatically downloads from UCI at runtime.
+
+UCI source:
 - https://archive.ics.uci.edu/dataset/296/diabetes+130-us+hospitals+for+years+1999-2008
-
-Place `diabetic_data.csv` at:
-- `data/diabetic_data.csv`
 
 ## 2) Install and run
 
