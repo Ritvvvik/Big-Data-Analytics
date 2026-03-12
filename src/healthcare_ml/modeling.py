@@ -9,6 +9,11 @@ from imblearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
+try:
+    from xgboost import XGBClassifier
+except Exception:  # optional dependency
+    XGBClassifier = None
+
 
 def build_models(preprocessor) -> Dict[str, Pipeline]:
     """Return model pipelines keyed by readable model names.
@@ -20,12 +25,12 @@ def build_models(preprocessor) -> Dict[str, Pipeline]:
     """
     smote = SMOTE(random_state=42)
 
-    return {
+    models: Dict[str, Pipeline] = {
         "Logistic Regression": Pipeline(
             [
                 ("preprocessor", preprocessor),
                 ("smote", smote),
-                ("classifier", LogisticRegression(max_iter=1000, class_weight=None)),
+                ("classifier", LogisticRegression(max_iter=1200)),
             ]
         ),
         "Random Forest": Pipeline(
@@ -35,7 +40,7 @@ def build_models(preprocessor) -> Dict[str, Pipeline]:
                 (
                     "classifier",
                     RandomForestClassifier(
-                        n_estimators=200,
+                        n_estimators=250,
                         random_state=42,
                         n_jobs=-1,
                     ),
@@ -43,3 +48,27 @@ def build_models(preprocessor) -> Dict[str, Pipeline]:
             ]
         ),
     }
+
+    if XGBClassifier is not None:
+        models["XGBoost"] = Pipeline(
+            [
+                ("preprocessor", preprocessor),
+                ("smote", smote),
+                (
+                    "classifier",
+                    XGBClassifier(
+                        n_estimators=300,
+                        max_depth=6,
+                        learning_rate=0.05,
+                        subsample=0.9,
+                        colsample_bytree=0.9,
+                        objective="binary:logistic",
+                        eval_metric="auc",
+                        random_state=42,
+                        n_jobs=-1,
+                    ),
+                ),
+            ]
+        )
+
+    return models

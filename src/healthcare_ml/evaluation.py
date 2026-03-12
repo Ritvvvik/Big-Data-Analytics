@@ -6,6 +6,7 @@ from typing import Dict
 
 from sklearn.metrics import (
     accuracy_score,
+    classification_report,
     confusion_matrix,
     f1_score,
     precision_score,
@@ -29,6 +30,10 @@ def evaluate_model(model, X_test, y_test) -> Dict[str, object]:
         "f1": float(f1_score(y_test, y_pred, zero_division=0)),
         "roc_auc": float(roc_auc_score(y_test, y_proba)),
         "confusion_matrix": confusion_matrix(y_test, y_pred),
+        "classification_report_text": classification_report(y_test, y_pred, zero_division=0),
+        "classification_report_dict": classification_report(
+            y_test, y_pred, output_dict=True, zero_division=0
+        ),
         "roc_curve": {"fpr": fpr, "tpr": tpr, "thresholds": thresholds},
     }
 

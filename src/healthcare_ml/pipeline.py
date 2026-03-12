@@ -27,6 +27,12 @@ from .visualization import (
     plot_top_feature_importance,
 )
 
+try:
+    from tqdm.auto import tqdm
+except Exception:  # fallback if tqdm is unavailable
+    def tqdm(iterable, **kwargs):
+        return iterable
+
 
 DOCTOR_INPUT_FEATURES: List[str] = [
     "race",
@@ -64,7 +70,7 @@ def _save_shap_explanation(best_pipeline, X_test, figures_dir: Path) -> bool:
         explainer = shap.Explainer(classifier, X_transformed)
         shap_values = explainer(X_transformed)
         values = shap_values.values
-        if values.ndim == 3:  # multiclass shape safety
+        if values.ndim == 3:
             values = values[:, :, 1]
         mean_abs_shap = np.abs(values).mean(axis=0)
 
@@ -84,31 +90,32 @@ def run_training_pipeline(
     figures_dir = base_dir / "figures"
     artifacts_dir = base_dir / "artifacts"
 
-    # 1) Load + inspect
     raw_df = load_csv(csv_path)
     eda = quick_eda(raw_df)
 
-    # 2) Prepare data
     processed_df = clean_raw_data(raw_df)
     processed_df = build_binary_target(processed_df)
     processed_df = add_simple_features(processed_df)
     split = train_test_data(processed_df)
     preprocessor, _, _ = make_preprocessor(split.X_train)
 
-    # 3) Train + evaluate
     models = build_models(preprocessor)
     results: Dict[str, Dict[str, object]] = {}
     trained = {}
-    for model_name, pipeline in models.items():
+
+    model_items = list(models.items())
+    for model_name, pipeline in tqdm(model_items, desc="Training models", unit="model"):
         pipeline.fit(split.X_train, split.y_train)
-        results[model_name] = evaluate_model(pipeline, split.X_test, split.y_test)
+        metrics = evaluate_model(pipeline, split.X_test, split.y_test)
+        results[model_name] = metrics
         trained[model_name] = pipeline
 
-    # 4) Select best model by ROC AUC
+        print(f"\n=== {model_name}: Classification Report ===")
+        print(metrics["classification_report_text"])
+
     best_model_name = choose_best_model(results, metric="roc_auc")
     best_pipeline = trained[best_model_name]
 
-    # 5) Save artifacts
     models_dir.mkdir(parents=True, exist_ok=True)
     figures_dir.mkdir(parents=True, exist_ok=True)
     artifacts_dir.mkdir(parents=True, exist_ok=True)
@@ -133,15 +140,18 @@ def run_training_pipeline(
             }
             for name, metrics in results.items()
         },
+        "classification_reports": {
+            name: metrics["classification_report_dict"] for name, metrics in results.items()
+        },
         "best_model": best_model_name,
         "saved_model": str(model_path),
         "dashboard_features": doctor_features,
+        "trained_model_names": list(models.keys()),
     }
     (artifacts_dir / "training_summary.json").write_text(
         json.dumps(summary, indent=2), encoding="utf-8"
     )
 
-    # 6) Visualizations
     best_metrics = results[best_model_name]
     plot_confusion_matrix(
         best_metrics["confusion_matrix"],

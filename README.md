@@ -8,22 +8,24 @@ A simple, faculty-friendly machine learning project using the UCI Diabetes 130-U
 
 ```mermaid
 flowchart TD
-    A["Data Sources<br>EHR / Labs / Demographics / Medications"] --> B["Data Ingestion Layer<br>Load CSV (local or auto-download from UCI)"]
-    B --> C["Data Processing Layer<br>Cleaning + Missing Values + Encoding + Scaling + Feature Engineering"]
-    C --> D["Class Imbalance Handling<br>SMOTE"]
-    D --> E["Machine Learning Layer<br>Logistic Regression + Random Forest"]
-    E --> F["Evaluation Layer<br>Accuracy, Precision, Recall, F1, ROC AUC"]
-    F --> G["Model Selection<br>Best ROC AUC"]
-    G --> H["Clinical Decision Output<br>Readmission Probability + Risk Score + Risk Band"]
-    G --> I["Visualization Layer<br>Confusion Matrix + ROC + ROC Comparison + SHAP"]
-    H --> J["Streamlit Doctor Dashboard<br>Essential features only"]
-
+    A[Data Sources\nEHR / Labs / Demographics / Medications] --> B[Data Ingestion Layer\nLoad CSV (local or auto-download from UCI)]
+    B --> C[Data Processing Layer\nCleaning + Missing Values + Encoding + Scaling + Feature Engineering]
+    C --> D[Class Imbalance Handling\nSMOTE]
+    D --> E[Machine Learning Layer\nLogistic Regression + Random Forest + XGBoost]
+    E --> F[Evaluation Layer\nAccuracy, Precision, Recall, F1, ROC AUC]
+    F --> G[Model Selection\nBest ROC AUC]
+    G --> H[Clinical Decision Output\nReadmission Probability + Risk Score + Risk Band]
+    G --> I[Visualization Layer\nConfusion Matrix + ROC + ROC Comparison + SHAP]
+    H --> J[Streamlit Doctor Dashboard\nEssential features only]
 ```
+
 ## Libraries used
 
 - pandas
 - scikit-learn
 - imbalanced-learn (**SMOTE**)
+- xgboost (**XGBoost model**)
+- tqdm (**training progress bar**)
 - matplotlib
 - seaborn
 - shap (**SHAP explainability**)
@@ -58,19 +60,21 @@ python run_pipeline.py --csv data/diabetic_data.csv
 6. Train models:
    - Logistic Regression
    - Random Forest
+   - XGBoost (if installed)
 7. Evaluate with:
    - Accuracy
    - Precision
    - Recall
    - F1 Score
    - ROC AUC
+   - Classification report (printed during training)
 8. Choose best model by ROC AUC
 9. Save model + metrics + plots
 
 ## Outputs
 
 - `models/best_readmission_model.joblib`
-- `artifacts/training_summary.json`
+- `artifacts/training_summary.json` (includes model metrics + classification reports)
 - `artifacts/sample_patient.csv`
 - `artifacts/dashboard_features.json` (limited features shown in Streamlit)
 - `figures/confusion_matrix.png`
@@ -94,3 +98,15 @@ Predictions returned:
 - readmission probability
 - risk score (0–100)
 - risk band (Low/Moderate/High)
+
+
+## Version compatibility
+
+If you saw scikit-learn version errors, recreate your environment and reinstall dependencies from `requirements.txt`:
+
+```bash
+rm -rf .venv
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
