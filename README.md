@@ -8,17 +8,16 @@ A simple, faculty-friendly machine learning project using the UCI Diabetes 130-U
 
 ```mermaid
 flowchart TD
-    A[Data Sources\nEHR / Labs / Demographics / Medications] --> B[Data Ingestion Layer\nLoad CSV (local or auto-download from UCI)]
-    B --> C[Data Processing Layer\nCleaning + Missing Values + Encoding + Scaling + Feature Engineering]
-    C --> D[Class Imbalance Handling\nSMOTE]
-    D --> E[Machine Learning Layer\nLogistic Regression + Random Forest]
-    E --> F[Evaluation Layer\nAccuracy, Precision, Recall, F1, ROC AUC]
-    F --> G[Model Selection\nBest ROC AUC]
-    G --> H[Clinical Decision Output\nReadmission Probability + Risk Score + Risk Band]
-    G --> I[Visualization Layer\nConfusion Matrix + ROC + ROC Comparison + SHAP]
-    H --> J[Streamlit Doctor Dashboard\nEssential features only]
+    A[Data Sources<br>EHR / Labs / Demographics / Medications] --> B[Data Ingestion Layer<br>Load CSV (local or auto-download from UCI)]
+    B --> C[Data Processing Layer<br>Cleaning + Missing Values + Encoding + Scaling + Feature Engineering]
+    C --> D[Class Imbalance Handling<br>SMOTE]
+    D --> E[Machine Learning Layer<br>Logistic Regression + Random Forest]
+    E --> F[Evaluation Layer<br>Accuracy, Precision, Recall, F1, ROC AUC]
+    F --> G[Model Selection<br>Best ROC AUC]
+    G --> H[Clinical Decision Output<br>Readmission Probability + Risk Score + Risk Band]
+    G --> I[Visualization Layer<br>Confusion Matrix + ROC + ROC Comparison + SHAP]
+    H --> J[Streamlit Doctor Dashboard<br>Essential features only]
 ```
-
 ## Libraries used
 
 - pandas
