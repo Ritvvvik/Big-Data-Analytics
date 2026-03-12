@@ -1,7 +1,25 @@
+# Python cache
 __pycache__/
 *.pyc
+
+# Virtual environment
 .venv/
-data/
+
+# ML artifacts
 models/
-figures/
 artifacts/
+
+# Data
+data/
+datasets/
+*.csv
+
+# Figures / outputs
+figures/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
