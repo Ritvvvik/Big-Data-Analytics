@@ -8,7 +8,6 @@ Design goal: keep this file easy to read in classroom/faculty review sessions.
 from dataclasses import dataclass
 from typing import List, Tuple
 
-import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -33,9 +32,8 @@ def clean_raw_data(df: pd.DataFrame) -> pd.DataFrame:
 
     - Converts '?' placeholders to missing values.
     - Drops duplicate rows.
-    - Keeps sklearn-compatible missing values as np.nan.
     """
-    cleaned = df.replace("?", np.nan).drop_duplicates().copy()
+    cleaned = df.replace("?", pd.NA).drop_duplicates().copy()
     return cleaned
 
 
@@ -52,16 +50,12 @@ def add_simple_features(df: pd.DataFrame) -> pd.DataFrame:
 
     if {"num_medications", "num_lab_procedures", "num_procedures"}.issubset(out.columns):
         out["care_intensity_index"] = (
-            pd.to_numeric(out["num_medications"], errors="coerce").fillna(0)
-            + pd.to_numeric(out["num_lab_procedures"], errors="coerce").fillna(0)
-            + pd.to_numeric(out["num_procedures"], errors="coerce").fillna(0)
+            out["num_medications"] + out["num_lab_procedures"] + out["num_procedures"]
         )
 
     if {"number_outpatient", "number_emergency", "number_inpatient"}.issubset(out.columns):
         out["total_prior_visits"] = (
-            pd.to_numeric(out["number_outpatient"], errors="coerce").fillna(0)
-            + pd.to_numeric(out["number_emergency"], errors="coerce").fillna(0)
-            + pd.to_numeric(out["number_inpatient"], errors="coerce").fillna(0)
+            out["number_outpatient"] + out["number_emergency"] + out["number_inpatient"]
         )
 
     return out
@@ -87,8 +81,6 @@ def train_test_data(df: pd.DataFrame, test_size: float = 0.2) -> DataSplit:
 
 def make_preprocessor(X: pd.DataFrame) -> Tuple[ColumnTransformer, List[str], List[str]]:
     """Create preprocessing pipelines for numeric and categorical columns."""
-    X = X.copy()
-
     numeric_cols = X.select_dtypes(include=["number", "bool"]).columns.tolist()
     categorical_cols = X.select_dtypes(exclude=["number", "bool"]).columns.tolist()
 
@@ -102,7 +94,7 @@ def make_preprocessor(X: pd.DataFrame) -> Tuple[ColumnTransformer, List[str], Li
     categorical_pipeline = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse=False)),
         ]
     )
 

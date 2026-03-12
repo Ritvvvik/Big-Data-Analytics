@@ -2,12 +2,14 @@
 
 A simple, faculty-friendly machine learning project using the UCI Diabetes 130-US Hospitals dataset.
 
-## Libraries used (simple stack)
+## Libraries used
 
 - pandas
 - scikit-learn
+- imbalanced-learn (**SMOTE**)
 - matplotlib
 - seaborn
+- shap (**SHAP explainability**)
 - streamlit (optional dashboard)
 
 ## 1) Get the dataset
@@ -32,27 +34,31 @@ python run_pipeline.py --csv data/diabetic_data.csv
 1. Load CSV with pandas
 2. Clean data (`?` → missing values, remove duplicates)
 3. Build binary target (`readmitted == "<30"`)
-4. Encode categorical features, scale numeric features
-5. Train models:
+4. Encode categorical features + scale numeric features
+5. Balance training data using **SMOTE**
+6. Train models:
    - Logistic Regression
    - Random Forest
-6. Evaluate with:
+7. Evaluate with:
    - Accuracy
    - Precision
    - Recall
    - F1 Score
    - ROC AUC
-7. Choose best model by ROC AUC
-8. Save model + metrics + plots
+8. Choose best model by ROC AUC
+9. Save model + metrics + plots
 
 ## Outputs
 
 - `models/best_readmission_model.joblib`
 - `artifacts/training_summary.json`
 - `artifacts/sample_patient.csv`
+- `artifacts/dashboard_features.json` (limited features shown in Streamlit)
 - `figures/confusion_matrix.png`
 - `figures/roc_curve.png`
+- `figures/roc_comparison.png`
 - `figures/feature_importance.png` (if best model supports importance)
+- `figures/shap_importance.png` (if SHAP available)
 
 ## Optional dashboard
 
@@ -60,7 +66,12 @@ python run_pipeline.py --csv data/diabetic_data.csv
 streamlit run dashboard.py
 ```
 
-The dashboard loads the saved model and predicts:
+The dashboard is doctor-friendly:
+- Shows only essential features (instead of all columns)
+- Uses dropdowns for clinical categorical fields
+- Still fills other hidden model fields using default sample values
+
+Predictions returned:
 - readmission probability
 - risk score (0–100)
 - risk band (Low/Moderate/High)
